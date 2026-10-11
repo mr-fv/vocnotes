@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VocNotes</title>
+    <link rel="stylesheet" href="static/font/Manrope/style.css">
+    <link rel="stylesheet" href="static/style/fontawesome-free-7.3.1-web/css/all.min.css">
+    <link rel="stylesheet" href="static/style/style.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="transport">
+            <span class="rec-dot" id="recDot"></span>
+            <button class="tbtn" id="btnStart" title="To start">
+                <i class="fa-solid fa-backward-fast"></i>
+            </button>
+            <button class="tbtn play fa-solid fa-play" id="btnPlay" title="Start / Pause"></button>
+            <span class="time" id="timeNow">0:00.0</span>
+            <input type="range" id="seek" min="0" max="100" step="0.01" value="0" disabled>
+            <span class="time" id="timeDur">0:00.0</span>
+        </div>
+        <button class="tbtn" id="btnMenuOpen">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+    </header>
+
+    <div class="menu panel open" id="menu">
+        <div class="menu-head">
+            <span>Settings</span>
+            <button id="btnMenuClose" class="menu-close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="m-sec">
+            <div class="m-title">Sources</div>
+            <button class="mbtn rec" id="btnRec">
+                <span class="mbtn-icon">
+                    <i class="fa-solid fa-microphone"></i>
+                </span>
+                <span>
+                    <b>Start recording</b>
+                    <small class="m-status">Use the microphone</small>
+                </span>
+            </button>
+            <button class="mbtn" id="btnLoadMusic">
+                <span class="mbtn-icon">
+                    <i class="fa-solid fa-music"></i>
+                </span>
+                <span>
+                    <b>Upload the soundtrack</b>
+                    <small class="m-status">Background soundtrack</small>
+                </span>
+            </button>
+            <button class="mbtn" id="btnLoadRef">
+                <span class="mbtn-icon">
+                    <i class="fa-solid fa-microphone-lines"></i>
+                </span>
+                <span>
+                    <b>Upload the reference voice</b>
+                    <small class="m-status">Vocal track</small>
+                </span>
+            </button>
+            <div class="m-status" id="fileStatus"></div>
+            <input type="file" id="fileMusic" accept="audio/*" hidden>
+            <input type="file" id="fileRef" accept="audio/*" hidden>
+
+        </div>
+        <div class="m-sec">
+            <div class="m-title">Indicators</div>
+            <label><input type="checkbox" checked data-ind="indNote"> Note and deviation</label>
+            <label><input type="checkbox" checked data-ind="indHz"> Frequency, Hz</label>
+            <label><input type="checkbox" checked data-ind="indDb"> Level, dBFS</label>
+            <label><input type="checkbox" checked data-ind="indRange"> Vocal range</label>
+            <label><input type="checkbox" checked data-ind="specPanel"> Microphone spectrum</label>
+        </div>
+        <div class="m-sec">
+            <div class="m-title">Tracks on the graph</div>
+            <label><input type="checkbox" checked data-trk="music"> Soundtrack</label>
+            <label><input type="checkbox" checked data-trk="ref"> Reference voice</label>
+            <label><input type="checkbox" checked data-trk="mic"> Microphone</label>
+        </div>
+    </div>
+
+    <main>
+        <section class="stage">
+            <div class="chart-wrap panel">
+                <canvas id="chart"></canvas>
+                <div class="legend">
+                    <span class="chip" id="lgMusic" style="--c:var(--blue)"><i></i>MUS</span>
+                    <span class="chip" id="lgRef" style="--c:var(--amber)"><i></i>REF</span>
+                    <span class="chip" id="lgMic" style="--c:var(--mint)"><i></i>MIC</span>
+                </div>
+            </div>
+            <div class="strip-wrap panel"><canvas id="strip"></canvas></div>
+            <div class="vols panel">
+                <div class="vol">
+                    <span class="vlab">MUS</span>
+                    <input type="range" id="volM" min="0" max="100">
+                    <span class="vval" id="volMv"></span>
+                </div>
+                <div class="vol">
+                    <span class="vlab">REF</span>
+                    <input type="range" id="volR" min="0" max="100">
+                    <span class="vval" id="volRv"></span>
+                </div>
+            </div>
+            <div class="spec-wrap panel" id="specPanel">
+                <div class="ptitle"> SPECTRUM · MIC · 60 HZ – 10 KHZ </div>
+                <canvas id="spec"></canvas>
+            </div>
+        </section>
+
+        <aside>
+            <div class="card" id="indNote" style="--ac:var(--amber)">
+                <div class="card-label">Current note</div>
+                <div class="note-row"><span id="noteName">—</span><span class="note-sub" id="noteRef"></span></div>
+                <div class="cents-scale">
+                    <div id="centsMark"></div>
+                </div>
+                <div class="cents-text"><span>−50</span><span id="centsVal">—</span><span>+50</span>
+                </div>
+            </div>
+            <div class="card" id="indHz" style="--ac:var(--cyan)">
+                <div class="card-label">Frequency</div>
+                <span class="big" id="hzVal">—</span><span class="unit">Hz</span>
+            </div>
+            <div class="card" id="indDb" style="--ac:var(--mint)">
+                <div class="card-label">Entry level</div>
+                <span class="big" id="dbVal" style="font-size:24px;color:var(--mint)">−∞</span><span
+                    class="unit">dBFS</span>
+                <div class="meter">
+                    <div id="dbFill"></div>
+                    <div id="dbPeak"></div>
+                </div>
+                <div class="scale-row">
+                    <span>−60</span><span>−48</span><span>−36</span><span>−24</span><span>−12</span><span>0</span>
+                </div>
+            </div>
+            <div class="card" id="indRange" style="--ac:var(--coral)">
+                <div class="card-label">Vocal range</div>
+                <div id="rangeName">no data</div>
+                <div class="rangebar" id="rangeBar">
+                    <div class="range-ticks" id="rangeTicks"></div>
+                    <div class="rangezone" id="rangeZone" style="display:none"></div>
+                    <div class="rz-lab lo" id="rzLo" style="display:none"></div>
+                    <div class="rz-lab hi" id="rzHi" style="display:none"></div>
+                    <div class="range-empty" id="rangeEmpty">Sing a few phrases</div>
+                </div>
+                <div class="range-info" id="rangeInfo"></div>
+                <button class="mini" id="btnRangeReset">Reset</button>
+            </div>
+        </aside>
+    </main>
+
+    <!-- <footer>
+        <span class="diag" id="diag">—</span>
+        <span class="ver">v3.4</span>
+    </footer> -->
+</body>
+
+<script src="static/script/helpers.js"></script>
+<script src="static/script/common.js"></script>
+<script src="static/script/app.js"></script>
+<script src="static/script/events.js"></script>
+<script src="static/script/hotkeys.js"></script>
+
+</html>
