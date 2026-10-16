@@ -7,6 +7,7 @@ const colorCoral = '#ff5d73';
 
 const btnLoadMus = $('#btnLoadMusic');
 const btnLoadRef = $('#btnLoadRef');
+const btnOpenPlaylist = $('#btnOpenPlaylist');
 const boxLoadMusStatus = $('#btnLoadMusic .m-status');
 const boxLoadRefStatus = $('#btnLoadRef .m-status');
 const rngSeek = $('#seek');
@@ -15,6 +16,7 @@ const rngRefVol = $('#volR');
 const boxMusVolVal = $('#volMv');
 const boxRefVolVal = $('#volRv');
 const boxMenu = $('#menu');
+const btnLyrics = $('#btnLyrics');
 const btnMenuOpen = $('#btnMenuOpen');
 const btnMenuClose = $('#btnMenuClose');
 const inpFileMus = $('#fileMusic');
@@ -43,6 +45,9 @@ const boxCentsMark = $('#centsMark');
 const boxDBVal = $('#dbVal');
 const boxDBFill = $('#dbFill');
 const boxDBPeak = $('#dbPeak');
+const boxPlaylist = $('#playlist');
+const boxLyrics = $('.lyrics');
+const textLyrics = $('#lyricsText');
 
 const cvChart = $('#chart');
 const cvStrip = $('#strip');
@@ -215,6 +220,24 @@ function updPlayBtn() {
 }
 
 /* ═══════════ uploading files ═══════════ */
+
+async function loadMp3AsFile(url) {
+	const response = await fetch(url);
+	if (!response.ok) throw new Error(`Failed to load ${url}`);
+	const blob = await response.blob();
+	const fileName = url.split('/').pop() || 'audio.mp3';
+	const file = new File([blob], fileName, { type: 'audio/mpeg' });
+	return file;
+}
+
+async function loadPlaylistTrack(key) {
+	const t = PLAYLIST[key];
+	const VOC_FILE = await loadMp3AsFile(`/static/playlist/${t.name}/${t.vocal}`);
+	const MUS_FILE = await loadMp3AsFile(`/static/playlist/${t.name}/${t.music}`);
+	await loadAudio(C_MUS, MUS_FILE);
+	await loadAudio(C_REF, VOC_FILE);
+	if (t.lyrics !== null) { textLyrics.textContent = t.lyrics; }
+}
 
 function peaksOf(buf, n = 1400) {
 	const d = buf.getChannelData(0);
@@ -845,11 +868,22 @@ function frame() {
 }
 requestAnimationFrame(frame);
 
+
 rngFill(rngSeek);
 changeVolume(C_MUS, 80);
 changeVolume(C_REF, 70);
 
 
+for (const track in PLAYLIST) {
+	const btn = document.createElement("button");
+	btn.classList.add('mbtn');
+	btn.innerHTML = PLAYLIST[track].name;
+	boxPlaylist.appendChild(btn);
+	btn.addEventListener('click', () => {
+		loadPlaylistTrack(track);
+		boxMenu.removeAttribute('mode');
+	});
+}
 
 
 

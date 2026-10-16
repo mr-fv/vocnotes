@@ -8,12 +8,21 @@ window.addEventListener('pointerup', () => dragSeek = false);
 rngMusVol.addEventListener('input', e => { changeVolume(C_MUS, e.target.value); });
 rngRefVol.addEventListener('input', e => { changeVolume(C_REF, e.target.value); });
 
-btnMenuOpen.addEventListener('click', e => { e.stopPropagation(); boxMenu.classList.add('open'); });
-btnMenuClose.addEventListener('click', e => { e.stopPropagation(); boxMenu.classList.remove('open'); });
+btnLyrics.addEventListener('click', e => { boxLyrics.classList.toggle('open'); btnLyrics.classList.toggle('open'); });
+btnMenuOpen.addEventListener('click', e => { e.stopPropagation(); boxMenu.classList.add('open'); boxMenu.removeAttribute('mode'); });
+btnMenuClose.addEventListener('click', e => {
+	e.stopPropagation();
+	if (boxMenu.getAttribute('mode') === null) {
+		boxMenu.classList.remove('open');
+	} else {
+		boxMenu.removeAttribute('mode');
+	}
+});
 document.addEventListener('click', e => { if (!boxMenu.contains(e.target)) boxMenu.classList.remove('open'); });
 
 btnLoadMus.addEventListener('click', () => inpFileMus.click());
 btnLoadRef.addEventListener('click', () => inpFileRef.click());
+btnOpenPlaylist.addEventListener('click', () => { boxMenu.setAttribute('mode', 'playlist'); });
 inpFileMus.addEventListener('change', e => {
 	if (e.target.files[0]) loadAudio(C_MUS, e.target.files[0]);
 	e.target.value = '';
