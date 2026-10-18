@@ -8,7 +8,7 @@ window.addEventListener('pointerup', () => dragSeek = false);
 rngMusVol.addEventListener('input', e => { changeVolume(C_MUS, e.target.value); });
 rngRefVol.addEventListener('input', e => { changeVolume(C_REF, e.target.value); });
 
-btnLyrics.addEventListener('click', e => { boxLyrics.classList.toggle('open'); btnLyrics.classList.toggle('open'); });
+btnLyrics.addEventListener('click', e => { toggleLyrics(!boxLyrics.classList.contains('open')); });
 btnMenuOpen.addEventListener('click', e => { e.stopPropagation(); boxMenu.classList.add('open'); boxMenu.removeAttribute('mode'); });
 btnMenuClose.addEventListener('click', e => {
 	e.stopPropagation();
@@ -32,17 +32,16 @@ inpFileRef.addEventListener('change', e => {
 	e.target.value = '';
 });
 document.querySelectorAll('[data-ind]').forEach(cb => cb.addEventListener('change', () => {
-	document.getElementById(cb.dataset.ind).style.display = cb.checked ? '' : 'none';
+	toggleInd(cb.dataset.ind, cb.checked);
 }));
 
-const chips = { music: lgMus, ref: lgRef, mic: lgMic };
+
 document.querySelectorAll('[data-trk]').forEach(cb => cb.addEventListener('change', () => {
-	S.show[cb.dataset.trk] = cb.checked;
-	chips[cb.dataset.trk].classList.toggle('off', !cb.checked);
+	toggleTrk(cb.dataset.trk, cb.checked);
 }));
 
-document.querySelectorAll('[data-lyr]').forEach(cb => cb.addEventListener('change', () => {	
-	S.lyrics[cb.dataset.lyr] = cb.checked;
+document.querySelectorAll('[data-lyr]').forEach(cb => cb.addEventListener('change', () => {
+	toggleLyr(cb.dataset.lyr, cb.checked);
 }));
 
 btnRangeReset.addEventListener('click', () => { S.rangeNotes.length = 0; computeRange(); });

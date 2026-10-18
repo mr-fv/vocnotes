@@ -1,5 +1,7 @@
 'use strict';
 
+const CURRENT_VERSION = 3.5;
+
 const fontFamily = 'Manrope';
 const colorOrange = 'rgb(255, 138, 61)';
 const colorAmber = 'rgb(255, 180, 84)';
@@ -65,6 +67,7 @@ const boxDBPeak = $('#dbPeak');
 const boxPlaylist = $('#playlist');
 const boxLyrics = $('.lyrics');
 const textLyrics = $('#lyricsText');
+const boxAppVersion = $('#appVersion');
 
 const cvChart = $('#chart');
 const cvStrip = $('#strip');
@@ -76,7 +79,7 @@ const gSpec = cvSpec.getContext('2d');
 const lgMus = $('#lgMusic');
 const lgRef = $('#lgRef');
 const lgMic = $('#lgMic');
-
+const chips = { music: lgMus, ref: lgRef, mic: lgMic };
 
 /* ═══════════ test ═══════════ */
 
@@ -122,7 +125,7 @@ const S = {
 		init: false
 	},
 	lyrics: {
-		autoscroll: true,
+		lyrAutoscroll: true,
 	},
 	dbfs: -99,
 	freq: 0,
@@ -873,7 +876,7 @@ function computeRange() {
 }
 
 function scrollLyrics(pos) {
-	if (pos === lastLyricTime) { return; }
+	if (pos === lastLyricTime || lyricTimes.length === 0) { return; }
 	let i = pos > lastLyricTime ? lastLyricItem : 0;
 	let last = i;
 	for (i; i < lyricTimes.length; i++) {
@@ -925,11 +928,11 @@ function updUI() {
 	peakDb = Math.max(peakDb - 0.25, db);
 	boxDBPeak.style.left = clamp((peakDb + 60) / 60 * 100, 0, 100) + '%';
 	if (++rangeTick % 30 === 0) computeRange();
-	if (S.lyrics.autoscroll) scrollLyrics(p);
+	if (S.lyrics.lyrAutoscroll) scrollLyrics(p);
 
 	// const dg = boxDiag;
 	// if (dg) {
-	// 	let t = 'v3.4 · sr ' + (actx ? actx.sampleRate : 0);
+	// 	let t = 'sr ' + (actx ? actx.sampleRate : 0);
 	// 	t += S.micOn ? (' · input: ' + (S.voiced ? 'f=' + num(S.freq, 1) + ' Hz · ' + num(db, 0) + ' dB · note=' + midiName(S.dispMidi) : 'silence')) : ' · input off';
 	// 	if (badSamples > 0) t += ' · bad samples: ' + badSamples;
 	// 	dg.textContent = t;
@@ -945,7 +948,61 @@ function changeVolume(which, val) {
 	rngFill(rng, val);
 }
 
+function toggleLyrics(state = false) {
+	if (state === null || state === undefined) {
+		return;
+	} else if (state) {
+		boxLyrics.classList.add('open');
+		btnLyrics.classList.add('open');
+	} else {
+		boxLyrics.classList.remove('open');
+		btnLyrics.classList.remove('open');
+	}
+	settings.set('lyricsOpen', boxLyrics.classList.contains('open'));
+}
+
+function toggleInd(id, state = false) {
+	const el = $('[data-ind=' + id + ']');
+	el.checked = state;
+	document.getElementById(id).style.display = state ? '' : 'none';
+	settings.set(id, state);
+}
+
+function toggleTrk(id, state = false) {
+	const el = $('[data-trk=' + id + ']');
+	el.checked = state;
+	S.show[id] = state;
+	chips[id].classList.toggle('off', !state);
+	settings.set(id, state);
+}
+
+function toggleLyr(id, state = false) {
+	const el = $('[data-lyr=' + id + ']');
+	el.checked = state;
+	S.lyrics[id] = state;
+	settings.set(id, state);
+}
+
+/* ═══════════ load settings ═══════════ */
+
+const settings = new SettingsManager();
+
+toggleLyrics(settings.get('lyricsOpen'));
+
+const inds = ['indNote', 'indHz', 'indDb', 'indRange', 'specPanel'];
+for (const ind of inds) { toggleInd(ind, settings.get(ind)); }
+
+const trks = ['music', 'ref', 'mic'];
+for (const trk of trks) { toggleTrk(trk, settings.get(trk)); }
+
+const lyrs = ['lyrAutoscroll'];
+for (const lyr of lyrs) { toggleLyr(lyr, settings.get(lyr)); }
+
+
+
 /* ═══════════ main cycle ═══════════ */
+
+boxAppVersion.innerHTML = 'v' + CURRENT_VERSION;
 
 function frame() {
 	try {
