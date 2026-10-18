@@ -1,9 +1,26 @@
 'use strict';
 
-const colorOrange = '#ff8a3d';
-const colorAmber = '#ffb454';
-const colorMint = '#3fe0a8';
-const colorCoral = '#ff5d73';
+const fontFamily = 'Manrope';
+const colorOrange = 'rgb(255, 138, 61)';
+const colorAmber = 'rgb(255, 180, 84)';
+const colorAmber85 = 'rgba(255,180,84,.85)';
+const colorMint = 'rgb(63, 224, 168)';
+const colorMintLight = 'rgb(174, 247, 221)';
+const colorCoral = 'rgb(255, 93, 115)';
+const colorCoral00 = 'rgba(255,93,115,0)';
+const colorCoral14 = 'rgba(255,93,115,.14)';
+const colorSpecFill = 'rgb(93, 118, 128)';
+const colorSpecStroke = 'rgba(139,163,171,.1)';
+const colorSpecWhite = 'rgba(232, 241, 242, 0.55)';
+const colorStrokeBrown = 'rgba(255,180,84,.4)';
+const colorStroke13 = 'rgba(139,163,171,.13)';
+const colorStroke05 = 'rgba(139,163,171,.05)';
+const colorStripMint06 = 'rgba(63,224,168,.06)';
+const colorStripBlue5 = 'rgba(110,168,255,.5)';
+const colorStripAmber5 = 'rgba(255,180,84,.5)';
+const colorStopsWhite = 'rgba(232,241,242,.10)';
+const colorStopsBlack = 'rgba(232,241,242,.035)';
+
 
 const btnLoadMus = $('#btnLoadMusic');
 const btnLoadRef = $('#btnLoadRef');
@@ -67,10 +84,10 @@ const lgMic = $('#lgMic');
 window.addEventListener('DOMContentLoaded', () => {
 	const ok = (
 		NOTES.length === 12
-		&& midiName(60) === `${NOTES[0]}4`
-		&& midiName(59) === `${NOTES[11]}3`
-		&& midiName(56) === `${NOTES[8]}3`
-		&& midiName(58) === `${NOTES[10]}3`
+		&& midiName(60) === NOTES[0] + '4'
+		&& midiName(59) === NOTES[11] + '3'
+		&& midiName(56) === NOTES[8] + '3'
+		&& midiName(58) === NOTES[10] + '3'
 		&& Math.round(f2m(246.94)) === 59
 		&& Math.round(f2m(233.08)) === 58
 	);
@@ -104,6 +121,9 @@ const S = {
 		tHi: 77,
 		init: false
 	},
+	lyrics: {
+		autoscroll: true,
+	},
 	dbfs: -99,
 	freq: 0,
 	cents: 0,
@@ -111,9 +131,12 @@ const S = {
 	micOn: false,
 	t0: 0,
 	t1: 16,
-	geo: null
+	geo: null,
 };
 
+let lyricTimes = [];
+let lastLyricTime = 0;
+let lastLyricItem = 0;
 let badSamples = 0;
 let srcM = null;
 let srcR = null;
@@ -221,22 +244,66 @@ function updPlayBtn() {
 
 /* ═══════════ uploading files ═══════════ */
 
-async function loadMp3AsFile(url) {
+async function loadMp3AsFile(url, fileName = null) {
 	const response = await fetch(url);
-	if (!response.ok) throw new Error(`Failed to load ${url}`);
+	if (!response.ok) throw new Error('Failed to load ' + url);
 	const blob = await response.blob();
-	const fileName = url.split('/').pop() || 'audio.mp3';
+	if (fileName === null) {
+		fileName = url.split('/').pop() || 'audio.mp3';
+	}
 	const file = new File([blob], fileName, { type: 'audio/mpeg' });
 	return file;
 }
 
+function loadLyrics(lyrics) {
+	textLyrics.innerHTML = '';
+	lyricTimes = [];
+
+	let i = 0;
+	let prev = 0;
+	let mode = null;
+
+	function addSpan(cssclass, text = null) {
+		const span = document.createElement('span');
+		span.innerText = text !== null ? text : lyrics.slice(prev, i);
+		span.classList.add(cssclass);
+		textLyrics.appendChild(span);
+		return span;
+	}
+
+	while (i < lyrics.length) {
+		if (mode === null && lyrics[i] === '{' && lyrics[i + 1] === '$' && lyrics[i + 2] === 't' && lyrics[i + 3] === ':') {
+			mode = 'time';
+			addSpan('text');
+			prev = i + 4;
+			i += 3;
+		} else if (mode === 'time' && lyrics[i] === '}') {
+			mode = null;
+			const timenumber = lyrics.slice(prev, i);
+			const timespan = addSpan('time', timenumber);
+			lyricTimes.push([Number(timenumber), timespan]);
+			prev = i + 1;
+		} else if (mode === null && lyrics[i] === '[') {
+			mode = 'sect';
+			addSpan('text');
+			prev = i + 1;
+		} else if (mode === 'sect' && lyrics[i] === ']') {
+			mode = null;
+			addSpan('sect');
+			prev = i + 1;
+		}
+		i += 1;
+	}
+	addSpan('text');
+}
+
 async function loadPlaylistTrack(key) {
 	const t = PLAYLIST[key];
-	const VOC_FILE = await loadMp3AsFile(`/static/playlist/${t.name}/${t.vocal}`);
-	const MUS_FILE = await loadMp3AsFile(`/static/playlist/${t.name}/${t.music}`);
+	const MUS_FILE = await loadMp3AsFile('/static/playlist/' + t.folder + '/' + t.music, t.name + ' [music]');
 	await loadAudio(C_MUS, MUS_FILE);
+	const VOC_FILE = await loadMp3AsFile('/static/playlist/' + t.folder + '/' + t.vocal, t.name + ' [vocals]');
 	await loadAudio(C_REF, VOC_FILE);
-	if (t.lyrics !== null) { textLyrics.textContent = t.lyrics; }
+	if (t.lyrics !== null) { loadLyrics(t.lyrics); }
 }
 
 function peaksOf(buf, n = 1400) {
@@ -555,12 +622,12 @@ function drawChart() {
 		const Y = y(m);
 		if (!isFinite(Y)) continue;
 		const isC = pc === 0;
-		g.strokeStyle = isC ? 'rgba(255,180,84,.4)' : whites.includes(pc) ? 'rgba(139,163,171,.13)' : 'rgba(139,163,171,.05)';
+		g.strokeStyle = isC ? colorStrokeBrown : whites.includes(pc) ? colorStroke13 : colorStroke05;
 		g.lineWidth = isC ? 1.4 : 1;
 		drawLine(g, x0, Y, W - 8, Y);
 		if (isC) {
-			g.fillStyle = 'rgba(255,180,84,.85)';
-			g.font = '600 10px Manrope';
+			g.fillStyle = colorAmber85;
+			g.font = getFont(10, 600);
 			g.fillText(NOTES[0] + (Math.floor(m / 12) - 1), x0 - 6, Y);
 		}
 	}
@@ -593,7 +660,7 @@ function drawChart() {
 		if (S.voiced && isFinite(S.dispMidi)) {
 			const cx = x(p);
 			if (isFinite(cx) && cx >= x0) {
-				g.fillStyle = '#aef7dd';
+				g.fillStyle = colorMintLight;
 				g.shadowColor = colorMint;
 				g.shadowBlur = 16;
 				g.beginPath();
@@ -606,8 +673,8 @@ function drawChart() {
 	const px = x(p);
 	if (isFinite(px) && px >= x0) {
 		const gr = g.createLinearGradient(px - 14, 0, px, 0);
-		gr.addColorStop(0, 'rgba(255,93,115,0)');
-		gr.addColorStop(1, 'rgba(255,93,115,.14)');
+		gr.addColorStop(0, colorCoral00);
+		gr.addColorStop(1, colorCoral14);
 		g.fillStyle = gr;
 		g.fillRect(px - 14, 0, 14, H);
 		g.strokeStyle = colorCoral;
@@ -650,27 +717,27 @@ function drawStrip() {
 	g.clearRect(0, 0, W, H);
 	const D = duration();
 	if (!D) {
-		g.fillStyle = '#5d7680';
-		g.font = '11px Manrope';
+		g.fillStyle = colorSpecFill;
+		g.font = getFont(11);
 		g.textAlign = 'center';
 		g.fillText('', W / 2, H / 2);
 		return;
 	}
 
 	const x = t => t / D * W;
-	g.fillStyle = 'rgba(63,224,168,.06)';
+	g.fillStyle = colorStripMint06;
 	g.fillRect(0, 0, clamp(x(pos()), 0, W), H);
-	if (S.show.music && S.peaksM) drawPeaks(g, S.peaksM, W, H, 'rgba(110,168,255,.5)');
-	if (S.show.ref && S.peaksR) drawPeaks(g, S.peaksR, W, H, 'rgba(255,180,84,.5)');
+	if (S.show.music && S.peaksM) drawPeaks(g, S.peaksM, W, H, colorStripBlue5);
+	if (S.show.ref && S.peaksR) drawPeaks(g, S.peaksR, W, H, colorStripAmber5);
 
 	const step = niceStep(D / 8);
-	g.font = '9px Manrope';
+	g.font = getFont(9);
 	for (let t = 0, i = 0; t <= D; t += step, i++) {
 		const X = x(t);
 		g.fillStyle = 'rgba(139,163,171,.35)';
 		g.fillRect(X, H - 10, 1, 10);
 		if (i % 2 === 0) {
-			g.fillStyle = '#5d7680';
+			g.fillStyle = colorSpecFill;
 			g.textAlign = 'left';
 			g.fillText(fmt(t).split('.')[0], X + 3, 10);
 		}
@@ -680,6 +747,12 @@ function drawStrip() {
 }
 
 /* ═══════════ spectrum ═══════════ */
+
+function getFont(size, weight = null) {
+	const w = weight === null ? '' : weight + ' ';
+	const s = size + 'px';
+	return w + s + ' ' + fontFamily;
+}
 
 function drawSpec() {
 	if (inpSpecPanel.style.display === 'none') return;
@@ -691,20 +764,20 @@ function drawSpec() {
 	const fmin = 60;
 	const fmax = 10000;
 	const fx = f => Math.log(f / fmin) / Math.log(fmax / fmin) * W;
-	g.font = '9px Manrope';
+	g.font = getFont(9);
 	g.textAlign = 'center';
 
 	for (const f of [100, 250, 500, 1000, 2000, 4000, 8000]) {
 		const X = fx(f);
-		g.strokeStyle = 'rgba(139,163,171,.1)';
+		g.strokeStyle = colorSpecStroke;
 		drawLine(g, X, 0, X, H - 12);
-		g.fillStyle = '#5d7680';
+		g.fillStyle = colorSpecFill;
 		g.fillText(f >= 1000 ? (f / 1000) + 'к' : f + '', X, H - 3);
 	}
 
 	if (!analyser) {
-		g.fillStyle = '#5d7680';
-		g.font = '12px Manrope';
+		g.fillStyle = colorSpecFill;
+		g.font = getFont(12);
 		g.fillText('', W / 2, H / 2 - 6);
 		return;
 	}
@@ -727,7 +800,7 @@ function drawSpec() {
 		if (h > peaksCap[i]) { peaksCap[i] = h; }
 		else { peaksCap[i] = Math.max(0, peaksCap[i] - 0.7); }
 
-		g.fillStyle = 'rgba(232,241,242,.55)';
+		g.fillStyle = colorSpecWhite;
 		g.fillRect(i * bw + 1, H - 12 - peaksCap[i] - 2, bw - 2, 2);
 	}
 }
@@ -741,7 +814,7 @@ function drawSpec() {
 	for (let m = RLO; m < RHI; m++) {
 		const a = ((m - RLO) / RSPAN * 100).toFixed(2);
 		const b = ((m + 1 - RLO) / RSPAN * 100).toFixed(2);
-		stops.push((whites.includes(m % 12) ? 'rgba(232,241,242,.10)' : 'rgba(232,241,242,.035)') + ' ' + a + '% ' + b + '%');
+		stops.push((whites.includes(m % 12) ? colorStopsWhite : colorStopsBlack) + ' ' + a + '% ' + b + '%');
 	}
 
 	boxRangeBar.style.backgroundImage = 'linear-gradient(90deg,' + stops.join(',') + ')';
@@ -767,7 +840,7 @@ function computeRange() {
 		boxRzLo.style.display = 'none';
 		boxRzHi.style.display = 'none';
 		boxRangeEmpty.style.display = 'flex';
-		boxRangeEmpty.textContent = `notes collected: ${A.length} / 40`;
+		boxRangeEmpty.textContent = 'notes collected: ' + A.length + ' / 40';
 		boxRangeInfo.textContent = '';
 		return;
 	}
@@ -783,7 +856,7 @@ function computeRange() {
 		if (u > 0 && o / u > bs) { bs = o / u; best = name; }
 	}
 
-	boxRangeName.textContent = `≈ ${best}`;
+	boxRangeName.textContent = '≈ ' + best;
 	const loP = rPct(lo);
 	const hiP = rPct(hi);
 	boxRangeEmpty.style.display = 'none';
@@ -796,11 +869,32 @@ function computeRange() {
 	boxRzHi.style.left = hiP + '%';
 	boxRzLo.textContent = midiName(lo);
 	boxRzHi.textContent = midiName(hi);
-	boxRangeInfo.textContent = `notes in the measure: ${A.length} · the estimate is approximate`;
+	boxRangeInfo.textContent = 'notes in the measure: ' + A.length + ' · the estimate is approximate';
+}
+
+function scrollLyrics(pos) {
+	if (pos === lastLyricTime) { return; }
+	let i = pos > lastLyricTime ? lastLyricItem : 0;
+	let last = i;
+	for (i; i < lyricTimes.length; i++) {
+		if (pos >= lyricTimes[i][0]) { last = i; }
+		else { break; }
+	}
+	lastLyricTime = pos;
+	lastLyricItem = last;
+	const rect = lyricTimes[last][1].getBoundingClientRect();
+	const cr = textLyrics.getBoundingClientRect();
+	const d = rect.top - cr.top;
+	const p = textLyrics.scrollTop + d - (textLyrics.clientHeight * 0.25);
+	textLyrics.scrollTo({
+		top: p,
+		behavior: 'smooth'
+	});
 }
 
 function updUI() {
 	const p = pos();
+
 	boxTimeNow.textContent = fmt(p);
 	if (!dragSeek) {
 		rngSeek.value = Math.min(p, rngSeek.max || 0);
@@ -813,18 +907,16 @@ function updUI() {
 		boxHzVal.textContent = num(S.freq, 1);
 		if (isFinite(S.cents)) {
 			boxCentsVal.textContent = (S.cents > 0 ? '+' : '') + S.cents.toFixed(1);
-			boxCentsVal.className = 'mono ' + (Math.abs(S.cents) <= 10 ? 'good' : Math.abs(S.cents) <= 25 ? 'mid' : 'bad');
+			boxCentsVal.className = (Math.abs(S.cents) <= 10 ? 'good' : Math.abs(S.cents) <= 25 ? 'mid' : 'bad');
 			boxCentsMark.style.left = clamp(50 + S.cents, 1, 99) + '%';
 		} else {
 			boxCentsVal.textContent = '—';
-			boxCentsVal.className = 'mono';
 		}
 	} else {
 		boxNoteName.textContent = '—';
 		boxNoteRef.textContent = '';
 		boxHzVal.textContent = '—';
 		boxCentsVal.textContent = '—';
-		boxCentsVal.className = 'mono';
 	}
 
 	const db = isFinite(S.dbfs) && S.micOn ? S.dbfs : -99;
@@ -833,6 +925,7 @@ function updUI() {
 	peakDb = Math.max(peakDb - 0.25, db);
 	boxDBPeak.style.left = clamp((peakDb + 60) / 60 * 100, 0, 100) + '%';
 	if (++rangeTick % 30 === 0) computeRange();
+	if (S.lyrics.autoscroll) scrollLyrics(p);
 
 	// const dg = boxDiag;
 	// if (dg) {
@@ -848,7 +941,7 @@ function changeVolume(which, val) {
 	const el = which === C_MUS ? boxMusVolVal : boxRefVolVal;
 	if (which === C_MUS) { if (gMusic) gMusic.gain.value = val / 100; }
 	else { if (gRef) gRef.gain.value = val / 100; }
-	el.textContent = `${val}%`;
+	el.textContent = val + '%';
 	rngFill(rng, val);
 }
 
@@ -880,8 +973,8 @@ for (const track in PLAYLIST) {
 	btn.innerHTML = PLAYLIST[track].name;
 	boxPlaylist.appendChild(btn);
 	btn.addEventListener('click', () => {
-		loadPlaylistTrack(track);
 		boxMenu.removeAttribute('mode');
+		loadPlaylistTrack(track);
 	});
 }
 

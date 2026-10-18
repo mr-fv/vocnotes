@@ -98,6 +98,10 @@
             <label><input type="checkbox" checked data-trk="ref"> Reference voice</label>
             <label><input type="checkbox" checked data-trk="mic"> Microphone</label>
         </div>
+        <div class="m-sec">
+            <div class="m-title">Lyrics</div>
+            <label><input type="checkbox" checked data-lyr="autoscroll"> Auto scroll</label>
+        </div>
         <div class="m-sec playlist" id="playlist">
             <div class="m-title">Tracks</div>
         </div>
@@ -133,7 +137,7 @@
         </section>
 
         <aside class="lyrics">
-            <textarea spellcheck="false" id="lyricsText"></textarea>
+            <div id="lyricsText" contenteditable="true" spellcheck="false"></div>
         </aside>
 
         <aside>

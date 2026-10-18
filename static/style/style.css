@@ -566,15 +566,37 @@ aside.lyrics::before {
     background: var(--ac, var(--line))
 }
 
-aside.lyrics textarea {
+#lyricsText {
     width: 100%;
     height: 100%;
-    background: transparent;
     color: var(--text);
-    border: none;
     resize: none;
     font-size: 14pt;
     padding: 0px 5px 0px 16px;
+    background: transparent;
+    border: none;
+    outline: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+#lyricsText span.time {
+    width: 0px;
+    height: 0px;
+    font-size: 0px;
+}
+
+#lyricsText span.sect {
+    color: var(--muted);
+    font-size: 11pt;
+}
+
+#lyricsText span.sect::before {
+    content: '[';
+}
+
+#lyricsText span.sect::after {
+    content: ']';
 }
 
 #btnLyrics.open {

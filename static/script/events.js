@@ -41,6 +41,10 @@ document.querySelectorAll('[data-trk]').forEach(cb => cb.addEventListener('chang
 	chips[cb.dataset.trk].classList.toggle('off', !cb.checked);
 }));
 
+document.querySelectorAll('[data-lyr]').forEach(cb => cb.addEventListener('change', () => {	
+	S.lyrics[cb.dataset.lyr] = cb.checked;
+}));
+
 btnRangeReset.addEventListener('click', () => { S.rangeNotes.length = 0; computeRange(); });
 
 function chartSeekEv(e) {
@@ -84,3 +88,7 @@ btnRec.addEventListener('click', async () => {
 		btnRec.classList.remove('on');
 	}
 });
+
+textLyrics.addEventListener('keydown', e => {
+	e.stopPropagation();
+})
