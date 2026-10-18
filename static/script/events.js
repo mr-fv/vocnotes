@@ -4,7 +4,6 @@ rngSeek.addEventListener('input', e => seek(+e.target.value));
 rngSeek.addEventListener('pointerdown', () => dragSeek = true);
 window.addEventListener('pointerup', () => dragSeek = false);
 
-
 rngMusVol.addEventListener('input', e => { changeVolume(C_MUS, e.target.value); });
 rngRefVol.addEventListener('input', e => { changeVolume(C_REF, e.target.value); });
 
@@ -91,3 +90,7 @@ btnRec.addEventListener('click', async () => {
 textLyrics.addEventListener('keydown', e => {
 	e.stopPropagation();
 })
+
+btnThemeToggle.addEventListener('click', e => {
+	applyTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+});

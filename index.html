@@ -8,10 +8,17 @@
     <link rel="apple-touch-icon" sizes="180x180" href="static/favicon/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="static/favicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="static/favicon/favicon-16x16.png">
-    <link rel="manifest" href="/site.webmanifest">
+    <link rel="manifest" href="static/favicon/site.webmanifest">
     <link rel="stylesheet" href="static/font/Manrope/style.css">
     <link rel="stylesheet" href="static/style/fontawesome-free-7.3.1-web/css/all.min.css">
     <link rel="stylesheet" href="static/style/style.css">
+    <script>
+        try {
+            var s = JSON.parse(localStorage.getItem('app_settings') || '{}');
+            document.documentElement.setAttribute('data-theme', s.theme === 'light' ? 'light' : 'dark');
+        }
+        catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+    </script>
 </head>
 
 <body>
@@ -83,6 +90,17 @@
             <div class="m-status" id="fileStatus"></div>
             <input type="file" id="fileMusic" accept="audio/*" hidden>
             <input type="file" id="fileRef" accept="audio/*" hidden>
+        </div>
+        <div class="m-sec">
+            <div class="m-title">Appearance</div>
+            <button class="mbtn" id="btnThemeToggle">
+                <span class="mbtn-icon">
+                    <i class="fa-solid fa-circle-half-stroke"></i>
+                </span>
+                <span>
+                    <b>Toggle theme</b>
+                </span>
+            </button>
         </div>
         <div class="m-sec">
             <div class="m-title">Indicators</div>

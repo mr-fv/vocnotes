@@ -3,7 +3,7 @@ class SettingsManager {
 		this.storageKey = key;
 		this.defaults = {
 			version: CURRENT_VERSION,
-			theme: 'dark',
+			'data-theme': 'dark',
 			lyricsOpen: false,
 			lyrAutoscroll: true,
 			indNote: true,

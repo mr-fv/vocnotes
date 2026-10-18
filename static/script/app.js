@@ -3,26 +3,60 @@
 const CURRENT_VERSION = 3.5;
 
 const fontFamily = 'Manrope';
-const colorOrange = 'rgb(255, 138, 61)';
-const colorAmber = 'rgb(255, 180, 84)';
-const colorAmber85 = 'rgba(255,180,84,.85)';
-const colorMint = 'rgb(63, 224, 168)';
-const colorMintLight = 'rgb(174, 247, 221)';
-const colorCoral = 'rgb(255, 93, 115)';
-const colorCoral00 = 'rgba(255,93,115,0)';
-const colorCoral14 = 'rgba(255,93,115,.14)';
-const colorSpecFill = 'rgb(93, 118, 128)';
-const colorSpecStroke = 'rgba(139,163,171,.1)';
-const colorSpecWhite = 'rgba(232, 241, 242, 0.55)';
-const colorStrokeBrown = 'rgba(255,180,84,.4)';
-const colorStroke13 = 'rgba(139,163,171,.13)';
-const colorStroke05 = 'rgba(139,163,171,.05)';
-const colorStripMint06 = 'rgba(63,224,168,.06)';
-const colorStripBlue5 = 'rgba(110,168,255,.5)';
-const colorStripAmber5 = 'rgba(255,180,84,.5)';
-const colorStopsWhite = 'rgba(232,241,242,.10)';
-const colorStopsBlack = 'rgba(232,241,242,.035)';
 
+/* ═══════════ theme palette (canvas) ═══════════ */
+
+let colorOrange;
+let colorAmber;
+let colorAmber85;
+let colorMint;
+let colorMintLight;
+let colorCoral;
+let colorCoral00;
+let colorCoral14;
+let colorSpecFill;
+let colorSpecStroke;
+let colorSpecWhite;
+let colorStrokeBrown;
+let colorStroke13;
+let colorStroke05;
+let colorStripMint06;
+let colorStripBlue5;
+let colorStripAmber5;
+let colorStripTick;
+let colorStopsWhite;
+let colorStopsBlack;
+let glowTrack;
+let glowCursor;
+
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+function syncTheme() {
+	colorOrange = cssVar('--cv-orange');
+	colorAmber = cssVar('--cv-amber');
+	colorAmber85 = cssVar('--cv-amber85');
+	colorMint = cssVar('--cv-mint');
+	colorMintLight = cssVar('--cv-mint-light');
+	colorCoral = cssVar('--cv-coral');
+	colorCoral00 = cssVar('--cv-coral00');
+	colorCoral14 = cssVar('--cv-coral14');
+	colorSpecFill = cssVar('--cv-spec-fill');
+	colorSpecStroke = cssVar('--cv-spec-stroke');
+	colorSpecWhite = cssVar('--cv-spec-white');
+	colorStrokeBrown = cssVar('--cv-stroke-c');
+	colorStroke13 = cssVar('--cv-stroke-white-key');
+	colorStroke05 = cssVar('--cv-stroke-black-key');
+	colorStripMint06 = cssVar('--cv-strip-played');
+	colorStripBlue5 = cssVar('--cv-strip-mus');
+	colorStripAmber5 = cssVar('--cv-strip-ref');
+	colorStripTick = cssVar('--cv-strip-tick');
+	colorStopsWhite = cssVar('--cv-key-white');
+	colorStopsBlack = cssVar('--cv-key-black');
+	glowTrack = parseFloat(cssVar('--cv-glow-track')) || 0;
+	glowCursor = parseFloat(cssVar('--cv-glow-cursor')) || 0;
+}
+
+/* ═══════════ / ═══════════ */
 
 const btnLoadMus = $('#btnLoadMusic');
 const btnLoadRef = $('#btnLoadRef');
@@ -68,6 +102,7 @@ const boxPlaylist = $('#playlist');
 const boxLyrics = $('.lyrics');
 const textLyrics = $('#lyricsText');
 const boxAppVersion = $('#appVersion');
+const btnThemeToggle = $('#btnThemeToggle');
 
 const cvChart = $('#chart');
 const cvStrip = $('#strip');
@@ -237,6 +272,7 @@ function seek(t) {
 		S.anchor = actx.currentTime;
 		startSources();
 	}
+	rngFill(rngSeek);
 }
 
 function updPlayBtn() {
@@ -518,7 +554,7 @@ function drawPitchTrack(g, pts, color, width) {
 	g.lineJoin = 'round';
 	g.lineCap = 'round';
 	g.shadowColor = color;
-	g.shadowBlur = 9;
+	g.shadowBlur = glowTrack;
 	g.beginPath();
 	let prev = null;
 
@@ -665,7 +701,7 @@ function drawChart() {
 			if (isFinite(cx) && cx >= x0) {
 				g.fillStyle = colorMintLight;
 				g.shadowColor = colorMint;
-				g.shadowBlur = 16;
+				g.shadowBlur = glowTrack ? 16 : 0;
 				g.beginPath();
 				g.arc(cx, y(S.dispMidi), 4.5, 0, 7);
 				g.fill();
@@ -683,7 +719,7 @@ function drawChart() {
 		g.strokeStyle = colorCoral;
 		g.lineWidth = 1.6;
 		g.shadowColor = colorCoral;
-		g.shadowBlur = 8;
+		g.shadowBlur = glowCursor;
 		drawLine(g, px, 0, px, H);
 		g.shadowBlur = 0;
 		g.fillStyle = colorCoral;
@@ -737,7 +773,7 @@ function drawStrip() {
 	g.font = getFont(9);
 	for (let t = 0, i = 0; t <= D; t += step, i++) {
 		const X = x(t);
-		g.fillStyle = 'rgba(139,163,171,.35)';
+		g.fillStyle = colorStripTick;
 		g.fillRect(X, H - 10, 1, 10);
 		if (i % 2 === 0) {
 			g.fillStyle = colorSpecFill;
@@ -810,18 +846,18 @@ function drawSpec() {
 
 /* ═══════════ right panel ═══════════ */
 
-(function () {
+function renderRangeBar() {
 	const whites = [0, 2, 4, 5, 7, 9, 11];
 	const stops = [];
-
 	for (let m = RLO; m < RHI; m++) {
 		const a = ((m - RLO) / RSPAN * 100).toFixed(2);
 		const b = ((m + 1 - RLO) / RSPAN * 100).toFixed(2);
 		stops.push((whites.includes(m % 12) ? colorStopsWhite : colorStopsBlack) + ' ' + a + '% ' + b + '%');
 	}
-
 	boxRangeBar.style.backgroundImage = 'linear-gradient(90deg,' + stops.join(',') + ')';
+}
 
+(function () {
 	for (let m = 48; m <= RHI; m += 12) {
 		const p = ((m - RLO) / RSPAN * 100);
 		const i = document.createElement('i');
@@ -983,10 +1019,20 @@ function toggleLyr(id, state = false) {
 	settings.set(id, state);
 }
 
+function applyTheme(theme) {
+	theme = (theme === 'light') ? 'light' : 'dark';
+	document.documentElement.setAttribute('data-theme', theme);
+	settings.set('data-theme', theme);
+	syncTheme();
+	renderRangeBar();
+	if (btnThemeToggle) btnThemeToggle.classList.toggle('on', theme === 'light');
+}
+
 /* ═══════════ load settings ═══════════ */
 
 const settings = new SettingsManager();
 
+applyTheme(settings.get('data-theme'));
 toggleLyrics(settings.get('lyricsOpen'));
 
 const inds = ['indNote', 'indHz', 'indDb', 'indRange', 'specPanel'];
@@ -997,8 +1043,6 @@ for (const trk of trks) { toggleTrk(trk, settings.get(trk)); }
 
 const lyrs = ['lyrAutoscroll'];
 for (const lyr of lyrs) { toggleLyr(lyr, settings.get(lyr)); }
-
-
 
 /* ═══════════ main cycle ═══════════ */
 
