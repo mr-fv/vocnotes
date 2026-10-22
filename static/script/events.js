@@ -7,6 +7,9 @@ window.addEventListener('pointerup', () => dragSeek = false);
 rngMusVol.addEventListener('input', e => { changeVolume(C_MUS, e.target.value); });
 rngRefVol.addEventListener('input', e => { changeVolume(C_REF, e.target.value); });
 
+rngMusVol.addEventListener('wheel', e => { changeVolume(C_MUS, e.target.value - Math.trunc(e.deltaY / 100)); });
+rngRefVol.addEventListener('wheel', e => { changeVolume(C_REF, e.target.value - Math.trunc(e.deltaY / 100)); });
+
 btnLyrics.addEventListener('click', e => { toggleLyrics(!boxLyrics.classList.contains('open')); });
 btnMenuOpen.addEventListener('click', e => { e.stopPropagation(); boxMenu.classList.add('open'); boxMenu.removeAttribute('mode'); });
 btnMenuClose.addEventListener('click', e => {
@@ -42,6 +45,8 @@ document.querySelectorAll('[data-trk]').forEach(cb => cb.addEventListener('chang
 document.querySelectorAll('[data-lyr]').forEach(cb => cb.addEventListener('change', () => {
 	toggleLyr(cb.dataset.lyr, cb.checked);
 }));
+
+inpLyrSize.addEventListener('change', e => { changeLyrSize(e.target.value); });
 
 btnRangeReset.addEventListener('click', () => { S.rangeNotes.length = 0; computeRange(); });
 
@@ -94,3 +99,35 @@ textLyrics.addEventListener('keydown', e => {
 btnThemeToggle.addEventListener('click', e => {
 	applyTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
 });
+
+boxMain.addEventListener("pointerdown", (e) => {
+	const handle = e.target.closest(".resizer");
+	if (!handle || !boxLyrics.contains(handle)) { return; }
+	e.preventDefault();
+	activeHandle = handle;
+	handle.setPointerCapture(e.pointerId);
+	handle.classList.add("is-active");
+	document.body.classList.add("is-resizing");
+	startX = e.clientX;
+	startWidth = boxLyrics.getBoundingClientRect().width;
+	direction = handle.classList.contains("resizer-right") ? 1 : -1;
+});
+
+boxMain.addEventListener("pointermove", (e) => {
+	if (!activeHandle) { return; }
+	const min = 100;
+	const max = Math.max(min, Math.floor(boxMain.clientWidth * 0.8));
+	const nextWidth = Math.min(max, Math.max(min, startWidth + (e.clientX - startX) * direction));
+	setLyrWidth(nextWidth);
+});
+
+const stopResize = (e) => {
+	if (!activeHandle) { return; }
+	activeHandle.releasePointerCapture?.(e.pointerId);
+	activeHandle.classList.remove("is-active");
+	activeHandle = null;
+	document.body.classList.remove("is-resizing");
+};
+
+boxMain.addEventListener("pointerup", stopResize);
+boxMain.addEventListener("pointercancel", stopResize);

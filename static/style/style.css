@@ -129,7 +129,8 @@ body {
     background: var(--bg);
     overflow: hidden;
     display: flex;
-    flex-direction: column
+    flex-direction: column;
+    user-select: none;
 }
 
 .panel {
@@ -271,7 +272,7 @@ main {
     flex: 1;
     display: grid;
     grid-template-columns: auto auto auto;
-    gap: 12px;
+    gap: 0px;
     padding: 12px 16px;
     min-height: 0
 }
@@ -281,7 +282,7 @@ main {
     flex-direction: column;
     gap: 12px;
     min-width: fit-content;
-    min-height: 0;    
+    min-height: 0;
 }
 
 .chart-wrap {
@@ -315,7 +316,7 @@ main {
     gap: 26px;
     padding: 10px 16px;
     align-items: center;
-    min-width: max-content;    
+    min-width: max-content;
 }
 
 .vol {
@@ -398,6 +399,7 @@ main {
 }
 
 aside {
+    margin-left: 12px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -644,7 +646,9 @@ aside {
     border-color: var(--coral)
 }
 
-aside.lyrics {
+.lyrics {
+    --w: 320px;
+    margin-left: 12px;
     position: relative;
     transition: .22s;
     width: 0px;
@@ -652,12 +656,12 @@ aside.lyrics {
     overflow: hidden;
 }
 
-aside.lyrics.open {
-    width: 320px;
+.lyrics.open {
+    width: var(--w);
     display: block;
 }
 
-aside.lyrics::before {
+.lyrics::before {
     content: "";
     position: absolute;
     left: 0;
@@ -913,6 +917,40 @@ footer b {
     color: var(--muted)
 }
 
+.resizer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    cursor: ew-resize;
+    touch-action: none;
+    z-index: 1;
+}
+
+.resizer-left {
+    left: 0px;
+}
+
+.resizer::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0px;
+    width: 3px;
+    background: transparent;
+}
+
+.resizer:hover::after,
+.resizer.is-active::after {
+    background: #999;
+}
+
+body.is-resizing {
+    user-select: none;
+    cursor: ew-resize;
+}
+
 #seek {
     --acc: var(--cyan);
 }
@@ -923,4 +961,56 @@ footer b {
 
 #volR {
     --acc: var(--amber);
+}
+
+#lgMusic {
+    --c: var(--blue);
+}
+
+#lgRef {
+    --c: var(--amber);
+}
+
+#lgMic {
+    --c: var(--mint);
+}
+
+#indNote {
+    --ac: var(--amber);
+}
+
+#indHz {
+    --ac: var(--cyan);
+}
+
+#indDb {
+    --ac: var(--mint);
+}
+
+#dbVal {
+    font-size: 24px;
+    color: var(--mint);
+}
+
+#indRange {
+    --ac: var(--coral);
+}
+
+#rangeZone,
+#rzLo,
+#rzHi {
+    display: none;
+}
+
+#lyrSize {
+    padding: 5px;
+    width: 60px;
+    background: var(--btn-bg);
+    color: var(--text);
+    border: solid 1px var(--line2);
+}
+
+input[type=number]::-webkit-inner-spin-button {
+    /* -webkit-appearance: none; */
+    opacity: 0.5;
 }

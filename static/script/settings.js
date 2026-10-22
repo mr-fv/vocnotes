@@ -6,6 +6,8 @@ class SettingsManager {
 			'data-theme': 'dark',
 			lyricsOpen: false,
 			lyrAutoscroll: true,
+			lyrSize: 14,
+			lyrWidth: 320,
 			indNote: true,
 			indHz: true,
 			indDb: true,
@@ -14,6 +16,8 @@ class SettingsManager {
 			music: true,
 			ref: true,
 			mic: true,
+			volMUS: 100,
+			volREF: 100,
 		};
 		this.state = this.load();
 	}
@@ -44,7 +48,7 @@ class SettingsManager {
 
 	set(field, value) {
 		if (!(field in this.defaults)) {
-			console.warn(`Поле "${field}" not defined in the default settings.`);
+			console.warn(`field "${field}" not defined in the default settings.`);
 		}
 		this.state[field] = value;
 		this.save();
@@ -58,23 +62,3 @@ class SettingsManager {
 		this.save();
 	}
 }
-
-
-// // 2. Чтение настройки при загрузке страницы
-// document.documentElement.setAttribute('data-theme', settings.get('theme'));
-// console.log('Текущая тема:', settings.get('theme'));
-
-// // 3. Изменение настройки (например, по клику на кнопку переключения темы)
-// function toggleTheme() {
-// 	const currentTheme = settings.get('theme');
-// 	const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-// 	// Обновляем UI немедленно
-// 	document.documentElement.setAttribute('data-theme', newTheme);
-
-// 	// Сохраняем в localStorage
-// 	settings.set('theme', newTheme);
-// }
-
-// // 4. Добавление обработчика события
-// document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);

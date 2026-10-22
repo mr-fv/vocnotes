@@ -1,6 +1,6 @@
 'use strict';
 
-const CURRENT_VERSION = 3.5;
+const CURRENT_VERSION = 3.6;
 
 const fontFamily = 'Manrope';
 
@@ -58,6 +58,7 @@ function syncTheme() {
 
 /* ═══════════ / ═══════════ */
 
+const boxMain = $('main');
 const btnLoadMus = $('#btnLoadMusic');
 const btnLoadRef = $('#btnLoadRef');
 const btnOpenPlaylist = $('#btnOpenPlaylist');
@@ -103,6 +104,7 @@ const boxLyrics = $('.lyrics');
 const textLyrics = $('#lyricsText');
 const boxAppVersion = $('#appVersion');
 const btnThemeToggle = $('#btnThemeToggle');
+const inpLyrSize = $('#lyrSize');
 
 const cvChart = $('#chart');
 const cvStrip = $('#strip');
@@ -189,6 +191,10 @@ let chartDrag = false;
 let peakDb = -99;
 let rangeTick = 0;
 let peaksCap = new Float32Array(0);
+let activeHandle = null;
+let startX = 0;
+let startWidth = 0;
+let direction = 1;
 
 /* ═══════════ canvases ═══════════ */
 
@@ -976,12 +982,15 @@ function updUI() {
 }
 
 function changeVolume(which, val) {
+	if (val > 100) { val = 100; } else if (val < 0) { val = 0; }
 	const rng = which === C_MUS ? rngMusVol : rngRefVol;
 	const el = which === C_MUS ? boxMusVolVal : boxRefVolVal;
 	if (which === C_MUS) { if (gMusic) gMusic.gain.value = val / 100; }
 	else { if (gRef) gRef.gain.value = val / 100; }
 	el.textContent = val + '%';
 	rngFill(rng, val);
+	const settingName = which === C_MUS ? 'volMUS' : 'volREF';
+	settings.set(settingName, val);
 }
 
 function toggleLyrics(state = false) {
@@ -1028,6 +1037,18 @@ function applyTheme(theme) {
 	if (btnThemeToggle) btnThemeToggle.classList.toggle('on', theme === 'light');
 }
 
+function changeLyrSize(val) {
+	if (val < 1) { val = 1; }
+	textLyrics.style.fontSize = val + 'pt';
+	inpLyrSize.value = val;
+	settings.set('lyrSize', val);
+}
+
+function setLyrWidth(val) {
+	boxLyrics.style.setProperty("--w", val + 'px');
+	settings.set('lyrWidth', val);
+}
+
 /* ═══════════ load settings ═══════════ */
 
 const settings = new SettingsManager();
@@ -1064,8 +1085,10 @@ requestAnimationFrame(frame);
 
 
 rngFill(rngSeek);
-changeVolume(C_MUS, 80);
-changeVolume(C_REF, 70);
+changeVolume(C_MUS, settings.get('volMUS'));
+changeVolume(C_REF, settings.get('volREF'));
+changeLyrSize(settings.get('lyrSize'));
+setLyrWidth(settings.get('lyrWidth'));
 
 
 for (const track in PLAYLIST) {
@@ -1078,15 +1101,3 @@ for (const track in PLAYLIST) {
 		loadPlaylistTrack(track);
 	});
 }
-
-
-
-
-
-
-
-
-
-
-
-

@@ -119,6 +119,7 @@
         <div class="m-sec">
             <div class="m-title">Lyrics</div>
             <label><input type="checkbox" checked data-lyr="lyrAutoscroll"> Auto scroll</label>
+            <label> Font size <input type="number" id="lyrSize"></label>
         </div>
         <div class="m-sec playlist" id="playlist">
             <div class="m-title">Tracks</div>
@@ -130,9 +131,9 @@
             <div class="chart-wrap panel">
                 <canvas id="chart"></canvas>
                 <div class="legend">
-                    <span class="chip" id="lgMusic" style="--c:var(--blue)"><i></i>MUS</span>
-                    <span class="chip" id="lgRef" style="--c:var(--amber)"><i></i>REF</span>
-                    <span class="chip" id="lgMic" style="--c:var(--mint)"><i></i>MIC</span>
+                    <span class="chip" id="lgMusic"><i></i>MUS</span>
+                    <span class="chip" id="lgRef"><i></i>REF</span>
+                    <span class="chip" id="lgMic"><i></i>MIC</span>
                 </div>
             </div>
             <div class="strip-wrap panel"><canvas id="strip"></canvas></div>
@@ -154,12 +155,13 @@
             </div>
         </section>
 
-        <aside class="lyrics">
+        <div class="lyrics">
+            <span class="resizer resizer-left"></span>
             <div id="lyricsText" contenteditable="true" spellcheck="false"></div>
-        </aside>
+        </div>
 
         <aside>
-            <div class="card" id="indNote" style="--ac:var(--amber)">
+            <div class="card" id="indNote">
                 <div class="card-label">Current note</div>
                 <div class="note-row"><span id="noteName">—</span><span class="note-sub" id="noteRef"></span></div>
                 <div class="cents-scale">
@@ -168,14 +170,13 @@
                 <div class="cents-text"><span>−50</span><span id="centsVal">—</span><span>+50</span>
                 </div>
             </div>
-            <div class="card" id="indHz" style="--ac:var(--cyan)">
+            <div class="card" id="indHz">
                 <div class="card-label">Frequency</div>
                 <span class="big" id="hzVal">—</span><span class="unit">Hz</span>
             </div>
-            <div class="card" id="indDb" style="--ac:var(--mint)">
+            <div class="card" id="indDb">
                 <div class="card-label">Entry level</div>
-                <span class="big" id="dbVal" style="font-size:24px;color:var(--mint)">−∞</span><span
-                    class="unit">dBFS</span>
+                <span class="big" id="dbVal">−∞</span><span class="unit">dBFS</span>
                 <div class="meter">
                     <div id="dbFill"></div>
                     <div id="dbPeak"></div>
@@ -184,14 +185,14 @@
                     <span>−60</span><span>−48</span><span>−36</span><span>−24</span><span>−12</span><span>0</span>
                 </div>
             </div>
-            <div class="card" id="indRange" style="--ac:var(--coral)">
+            <div class="card" id="indRange">
                 <div class="card-label">Vocal range</div>
                 <div id="rangeName">no data</div>
                 <div class="rangebar" id="rangeBar">
                     <div class="range-ticks" id="rangeTicks"></div>
-                    <div class="rangezone" id="rangeZone" style="display:none"></div>
-                    <div class="rz-lab lo" id="rzLo" style="display:none"></div>
-                    <div class="rz-lab hi" id="rzHi" style="display:none"></div>
+                    <div class="rangezone" id="rangeZone"></div>
+                    <div class="rz-lab lo" id="rzLo"></div>
+                    <div class="rz-lab hi" id="rzHi"></div>
                     <div class="range-empty" id="rangeEmpty">Sing a few phrases</div>
                 </div>
                 <div class="range-info" id="rangeInfo"></div>
