@@ -326,7 +326,14 @@ function loadLyrics(lyrics) {
 			mode = null;
 			const timenumber = lyrics.slice(prev, i);
 			const timespan = addSpan('time', timenumber);
-			lyricTimes.push([Number(timenumber), timespan]);
+			const timesec = (() => {
+				if (!timenumber.includes(':')) { return Number(timenumber); }
+				else {
+					const sp = timenumber.split(':');
+					return Number(sp[0]) * 60 + Number(sp[1]);
+				}
+			})();
+			lyricTimes.push([Number(timesec), timespan]);
 			prev = i + 1;
 		} else if (mode === null && lyrics[i] === '[') {
 			mode = 'sect';
@@ -343,12 +350,13 @@ function loadLyrics(lyrics) {
 }
 
 async function loadPlaylistTrack(key) {
-	const t = PLAYLIST[key];
-	const MUS_FILE = await loadMp3AsFile('/static/playlist/' + t.folder + '/' + t.music, t.name + ' [music]');
+	const data_url = "/static/playlist/" + key + ".json";
+	const track = await fetch(data_url).then(response => response.json());
+	const MUS_FILE = await loadMp3AsFile('/static/playlist/' + track.music, key + ' [music]');
 	await loadAudio(C_MUS, MUS_FILE);
-	const VOC_FILE = await loadMp3AsFile('/static/playlist/' + t.folder + '/' + t.vocal, t.name + ' [vocals]');
+	const VOC_FILE = await loadMp3AsFile('/static/playlist/' + track.vocal, key + ' [vocals]');
 	await loadAudio(C_REF, VOC_FILE);
-	if (t.lyrics !== null) { loadLyrics(t.lyrics); }
+	if (track.lyrics !== null) { loadLyrics(track.lyrics); }
 }
 
 function peaksOf(buf, n = 1400) {
@@ -1091,10 +1099,10 @@ changeLyrSize(settings.get('lyrSize'));
 setLyrWidth(settings.get('lyrWidth'));
 
 
-for (const track in PLAYLIST) {
+for (const track of PLAYLIST) {
 	const btn = document.createElement("button");
-	btn.classList.add('mbtn');
-	btn.innerHTML = PLAYLIST[track].name;
+	btn.classList.add('mbtn', 'psong');
+	btn.innerHTML = track;
 	boxPlaylist.appendChild(btn);
 	btn.addEventListener('click', () => {
 		boxMenu.removeAttribute('mode');
