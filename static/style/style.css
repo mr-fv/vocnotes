@@ -685,6 +685,10 @@ aside {
     overflow-y: auto;
 }
 
+#lyricsText, #lyricsText > * {
+       font-family: "PTSerif";
+}
+
 #lyricsText span.time {
     width: 0px;
     height: 0px;
