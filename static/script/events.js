@@ -10,7 +10,7 @@ rngRefVol.addEventListener('input', e => { changeVolume(C_REF, e.target.value); 
 rngMusVol.addEventListener('wheel', e => { changeVolume(C_MUS, e.target.value - Math.trunc(e.deltaY / 100)); });
 rngRefVol.addEventListener('wheel', e => { changeVolume(C_REF, e.target.value - Math.trunc(e.deltaY / 100)); });
 
-btnLyrics.addEventListener('click', e => { toggleLyrics(!boxLyrics.classList.contains('open')); });
+btnLyrics.addEventListener('click', () => toggleLyrics(!boxLyrics.classList.contains('open')));
 btnMenuOpen.addEventListener('click', e => { e.stopPropagation(); boxMenu.classList.add('open'); boxMenu.removeAttribute('mode'); });
 btnMenuClose.addEventListener('click', e => {
 	e.stopPropagation();
@@ -94,7 +94,7 @@ btnRec.addEventListener('click', async () => {
 
 textLyrics.addEventListener('keydown', e => {
 	e.stopPropagation();
-})
+});
 
 btnThemeToggle.addEventListener('click', e => {
 	applyTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light');

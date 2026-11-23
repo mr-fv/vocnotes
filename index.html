@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="VocNotes — browser-based vocal analysis: pitch tracking, spectrum analyzer and vocal range detection.">
     <title>VocNotes</title>
     <link rel="apple-touch-icon" sizes="180x180" href="static/favicon/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="static/favicon/favicon-32x32.png">
@@ -11,7 +12,8 @@
     <link rel="manifest" href="static/favicon/site.webmanifest">
     <link rel="stylesheet" href="static/font/Manrope/style.css">
     <link rel="stylesheet" href="static/font/PT_Serif/style.css">
-    <link rel="stylesheet" href="static/style/fontawesome-free-7.3.1-web/css/all.min.css">
+    <link rel="stylesheet" href="static/style/fontawesome-free-7.3.1-web/css/fontawesome.min.css">
+    <link rel="stylesheet" href="static/style/fontawesome-free-7.3.1-web/css/solid.min.css">
     <link rel="stylesheet" href="static/style/style.css">
     <script>
         try {
@@ -32,13 +34,13 @@
             </button>
             <button class="tbtn play fa-solid fa-play" id="btnPlay" title="Start / Pause"></button>
             <span class="time" id="timeNow">0:00.0</span>
-            <input type="range" id="seek" min="0" max="100" step="0.01" value="0" disabled>
+            <input type="range" id="seek" min="0" max="100" step="0.01" value="0" disabled aria-label="Seek">
             <span class="time" id="timeDur">0:00.0</span>
         </div>
-        <button class="tbtn" id="btnLyrics">
+        <button class="tbtn" id="btnLyrics" title="Lyrics" aria-label="Toggle lyrics">
             <i class="fa-solid fa-font"></i>
         </button>
-        <button class="tbtn" id="btnMenuOpen">
+        <button class="tbtn" id="btnMenuOpen" title="Settings" aria-label="Open settings">
             <i class="fa-solid fa-bars"></i>
         </button>
     </header>
@@ -46,7 +48,7 @@
     <div class="menu panel" id="menu">
         <div class="menu-head">
             <span>Settings</span>
-            <button id="btnMenuClose" class="menu-close">
+            <button id="btnMenuClose" class="menu-close" title="Close" aria-label="Close menu">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -81,7 +83,7 @@
             </button>
             <button class="mbtn" id="btnOpenPlaylist">
                 <span class="mbtn-icon">
-                    <i class="fa-solid fa-folder-open "></i>
+                    <i class="fa-solid fa-folder-open"></i>
                 </span>
                 <span>
                     <b>Playlist</b>
@@ -120,7 +122,7 @@
         <div class="m-sec">
             <div class="m-title">Lyrics</div>
             <label><input type="checkbox" checked data-lyr="lyrAutoscroll"> Auto scroll</label>
-            <label> Font size <input type="number" id="lyrSize"></label>
+            <label> Font size <input type="number" id="lyrSize" min="6" max="72" step="1"></label>
         </div>
         <div class="m-sec playlist" id="playlist">
             <div class="m-title">Tracks</div>
@@ -141,12 +143,12 @@
             <div class="vols panel">
                 <div class="vol">
                     <span class="vlab">MUS</span>
-                    <input type="range" id="volM" min="0" max="100">
+                    <input type="range" id="volM" min="0" max="100" aria-label="Music volume">
                     <span class="vval" id="volMv"></span>
                 </div>
                 <div class="vol">
                     <span class="vlab">REF</span>
-                    <input type="range" id="volR" min="0" max="100">
+                    <input type="range" id="volR" min="0" max="100" aria-label="Reference volume">
                     <span class="vval" id="volRv"></span>
                 </div>
             </div>

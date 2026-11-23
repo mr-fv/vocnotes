@@ -1,4 +1,5 @@
 :root {
+    color-scheme: dark;
     --bg: #0b1114;
     --panel: #121e24;
     --panel2: #0e171c;
@@ -55,6 +56,7 @@
 }
 
 [data-theme="light"] {
+    color-scheme: light;
     --bg: #eef1f4;
     --panel: #ffffff;
     --panel2: #f8fafb;
@@ -175,8 +177,11 @@ header {
     border-color: var(--mint);
 }
 
-.tbtn:active {
-    transform: translateY(0)
+.tbtn:focus-visible,
+.menu-close:focus-visible,
+.mini:focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
 }
 
 .tbtn.play {
@@ -191,7 +196,7 @@ header {
 }
 
 .tbtn.play:hover {
-    border: 1px solid var(--cyan);
+    box-shadow: 0 0 0px 2px var(--cyan);
 }
 
 .tbtn.play.on {
@@ -325,7 +330,6 @@ main {
     justify-content: center;
     gap: 10px;
     flex: 1;
-    min-width: 0;
     min-width: max-content;
 }
 
@@ -683,6 +687,7 @@ aside {
     outline: none;
     overflow-x: hidden;
     overflow-y: auto;
+    user-select: text;
 }
 
 #lyricsText, #lyricsText > * {
@@ -906,16 +911,6 @@ footer b {
     font-weight: 600
 }
 
-.diag {
-    margin-left: auto;
-    color: var(--diag);
-    font-size: 10px;
-    max-width: 46%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap
-}
-
 .ver {
     letter-spacing: 1px;
     color: var(--muted)
@@ -1015,7 +1010,6 @@ body.is-resizing {
 }
 
 input[type=number]::-webkit-inner-spin-button {
-    /* -webkit-appearance: none; */
     opacity: 0.5;
 }
 

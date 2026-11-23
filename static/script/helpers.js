@@ -4,6 +4,8 @@ const $ = s => document.querySelector(s);
 
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 
+const TAU = Math.PI * 2;
+
 const f2m = f => 69 + 12 * Math.log2(f / 440);
 
 const m2f = m => 440 * Math.pow(2, (m - 69) / 12);

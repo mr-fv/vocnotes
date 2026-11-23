@@ -27,8 +27,11 @@ class SettingsManager {
 			const storedData = localStorage.getItem(this.storageKey);
 			if (!storedData) { return { ...this.defaults }; }
 			const parsedData = JSON.parse(storedData);
-			if (!parsedData.version || parsedData.version < CURRENT_VERSION) { return { ...this.defaults }; }
-			return { ...this.defaults, ...parsedData };
+			// Reset only when the stored schema is NEWER than the code
+			// (e.g. an older backup was restored). Otherwise merge over
+			// the defaults so new options appear while user choices survive.
+			if (!parsedData.version || parsedData.version > CURRENT_VERSION) { return { ...this.defaults }; }
+			return { ...this.defaults, ...parsedData, version: CURRENT_VERSION };
 		} catch (e) {
 			console.error('Error reading settings:', e);
 			return { ...this.defaults };

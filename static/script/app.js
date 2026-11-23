@@ -1,6 +1,6 @@
 'use strict';
 
-const CURRENT_VERSION = 3.6;
+const CURRENT_VERSION = 3.7;
 
 const fontFamily = 'Manrope';
 
@@ -82,7 +82,6 @@ const btnRec = $('#btnRec');
 const boxTimeDur = $('#timeDur');
 const inpSpecPanel = $('#specPanel');
 const boxRangeBar = $('#rangeBar');
-const boxDiag = $('#diag');
 const boxRangeTicks = $('#rangeTicks');
 const boxRangeName = $('#rangeName');
 const boxRangeZone = $('#rangeZone');
@@ -100,6 +99,7 @@ const boxDBVal = $('#dbVal');
 const boxDBFill = $('#dbFill');
 const boxDBPeak = $('#dbPeak');
 const boxPlaylist = $('#playlist');
+const boxFileStatus = $('#fileStatus');
 const boxLyrics = $('.lyrics');
 const textLyrics = $('#lyricsText');
 const boxAppVersion = $('#appVersion');
@@ -177,7 +177,6 @@ const S = {
 let lyricTimes = [];
 let lastLyricTime = 0;
 let lastLyricItem = 0;
-let badSamples = 0;
 let srcM = null;
 let srcR = null;
 let micStream = null;
@@ -282,8 +281,8 @@ function seek(t) {
 }
 
 function updPlayBtn() {
-	btnPlay.classList.add(S.playing ? 'fa-pause' : 'fa-play');
-	btnPlay.classList.remove(S.playing ? 'fa-play' : 'fa-pause');
+	btnPlay.classList.toggle('fa-pause', S.playing);
+	btnPlay.classList.toggle('fa-play', !S.playing);
 	btnPlay.classList.toggle('on', S.playing);
 }
 
@@ -293,11 +292,8 @@ async function loadMp3AsFile(url, fileName = null) {
 	const response = await fetch(url);
 	if (!response.ok) throw new Error('Failed to load ' + url);
 	const blob = await response.blob();
-	if (fileName === null) {
-		fileName = url.split('/').pop() || 'audio.mp3';
-	}
-	const file = new File([blob], fileName, { type: 'audio/mpeg' });
-	return file;
+	const name = fileName !== null ? fileName : (url.split('/').pop() || 'audio.mp3');
+	return new File([blob], name, { type: blob.type || 'audio/mpeg' });
 }
 
 function loadLyrics(lyrics) {
@@ -350,13 +346,23 @@ function loadLyrics(lyrics) {
 }
 
 async function loadPlaylistTrack(key) {
-	const data_url = "/static/playlist/" + key + ".json";
-	const track = await fetch(data_url).then(response => response.json());
-	const MUS_FILE = await loadMp3AsFile('/static/playlist/' + track.music, key + ' [music]');
-	await loadAudio(C_MUS, MUS_FILE);
-	const VOC_FILE = await loadMp3AsFile('/static/playlist/' + track.vocal, key + ' [vocals]');
-	await loadAudio(C_REF, VOC_FILE);
-	if (track.lyrics !== null) { loadLyrics(track.lyrics); }
+	try {
+		setStatus(boxFileStatus, 'Loading “' + key + '”…');
+		const data_url = "/static/playlist/" + key + ".json";
+		const track = await fetch(data_url).then(response => {
+			if (!response.ok) throw new Error('HTTP ' + response.status);
+			return response.json();
+		});
+		const MUS_FILE = await loadMp3AsFile('/static/playlist/' + track.music, key + ' [music]');
+		await loadAudio(C_MUS, MUS_FILE);
+		const VOC_FILE = await loadMp3AsFile('/static/playlist/' + track.vocal, key + ' [vocals]');
+		await loadAudio(C_REF, VOC_FILE);
+		if (track.lyrics !== null) { loadLyrics(track.lyrics); }
+		setStatus(boxFileStatus, 'Loaded: ' + key);
+	} catch (e) {
+		console.error('[VOCNOTES] playlist load failed:', e);
+		setStatus(boxFileStatus, 'Playlist track “' + key + '” could not be loaded');
+	}
 }
 
 function peaksOf(buf, n = 1400) {
@@ -400,13 +406,20 @@ async function loadAudio(which, file) {
 			S.refBuf = buf;
 			S.peaksR = peaksOf(buf);
 			setStatus(status_box, 'The reference is loaded, height analysis...');
-			await analyzeRef(buf);
+			const ok = await analyzeRef(buf);
+			if (!ok) {
+				updateDur();
+				box.classList.remove('loaded');
+				setStatus(status_box, file.name + ' — pitch analysis failed');
+				return;
+			}
 		}
 		updateDur();
 	} catch (e) {
+		console.error('[VOCNOTES] decode failed:', e);
 		setStatus(status_box, 'The file could not be decoded');
 		box.classList.remove('loaded');
-		throw Error(e);
+		return;
 	}
 	setStatus(status_box, file.name);
 	box.classList.add('loaded');
@@ -445,10 +458,12 @@ async function analyzeRef(buf) {
 		}
 		S.refPitch = sm;
 		S.refStep = HOP / RATE;
+		return true;
 	} catch (e) {
+		console.error('[VOCNOTES] reference analysis failed:', e);
 		setStatus(boxLoadRefStatus, 'Reference analysis error');
+		return false;
 	}
-	setStatus(boxLoadRefStatus, 'reference is ready');
 }
 
 /* ═══════════ microphone ═══════════ */
@@ -468,8 +483,7 @@ async function ensureMic() {
 		S.micOn = true;
 		return true;
 	} catch (e) {
-		throw Error('No access to the microphone.');
-		return false;
+		throw new Error('No access to the microphone.');
 	}
 }
 
@@ -497,11 +511,7 @@ function tickMic() {
 	}
 
 	for (let i = 0; i < tdBuf.length; i++) {
-		const v = tdBuf[i];
-		if (!isFinite(v)) {
-			tdBuf[i] = 0;
-			badSamples++;
-		}
+		if (!isFinite(tdBuf[i])) { tdBuf[i] = 0; }
 	}
 
 	analyser.getByteFrequencyData(fdBuf);
@@ -540,9 +550,10 @@ function tickMic() {
 	}
 
 	const nowW = performance.now() / 1000;
-	while (S.live.length && (nowW - S.live[0].wall > 300 || S.live.length > 25000)) {
-		S.live.shift();
-	}
+	let cut = 0;
+	while (cut < S.live.length && nowW - S.live[cut].wall > 300) { cut++; }
+	if (S.live.length - cut > 25000) { cut = S.live.length - 25000; }
+	if (cut > 0) { S.live.splice(0, cut); }
 }
 
 /* ═══════════ chart ═══════════ */
@@ -586,7 +597,7 @@ function drawPitchTrack(g, pts, color, width) {
 	for (let i = 0; i < n; i++) {
 		if (spike[i]) {
 			g.beginPath();
-			g.arc(pts[i].x, pts[i].y, 2.3, 0, 7);
+			g.arc(pts[i].x, pts[i].y, 2.3, 0, TAU);
 			g.fill();
 		}
 	}
@@ -666,7 +677,7 @@ function drawChart() {
 	const x = t => x0 + (t - t0) / (t1 - t0) * pw;
 	const y = m => H - 8 - (m - S.view.tLo) / (S.view.tHi - S.view.tLo) * (H - 16);
 
-	const whites = [0, 2, 4, 5, 7, 9, 11];
+	const whites = WHITE_KEYS;
 	g.textAlign = 'right';
 	g.textBaseline = 'middle';
 
@@ -717,7 +728,7 @@ function drawChart() {
 				g.shadowColor = colorMint;
 				g.shadowBlur = glowTrack ? 16 : 0;
 				g.beginPath();
-				g.arc(cx, y(S.dispMidi), 4.5, 0, 7);
+				g.arc(cx, y(S.dispMidi), 4.5, 0, TAU);
 				g.fill();
 				g.shadowBlur = 0;
 			}
@@ -773,7 +784,7 @@ function drawStrip() {
 		g.fillStyle = colorSpecFill;
 		g.font = getFont(11);
 		g.textAlign = 'center';
-		g.fillText('', W / 2, H / 2);
+		g.fillText('Load a track to see the timeline', W / 2, H / 2);
 		return;
 	}
 
@@ -825,13 +836,13 @@ function drawSpec() {
 		g.strokeStyle = colorSpecStroke;
 		drawLine(g, X, 0, X, H - 12);
 		g.fillStyle = colorSpecFill;
-		g.fillText(f >= 1000 ? (f / 1000) + 'к' : f + '', X, H - 3);
+		g.fillText(f >= 1000 ? (f / 1000) + 'k' : f + '', X, H - 3);
 	}
 
 	if (!analyser) {
 		g.fillStyle = colorSpecFill;
 		g.font = getFont(12);
-		g.fillText('', W / 2, H / 2 - 6);
+		g.fillText('Turn on the microphone', W / 2, H / 2 - 6);
 		return;
 	}
 
@@ -840,9 +851,17 @@ function drawSpec() {
 	const nyq = actx.sampleRate / 2;
 
 	if (peaksCap.length !== bins) { peaksCap = new Float32Array(bins); }
+	const binHz = nyq / fdBuf.length;
 	for (let i = 0; i < bins; i++) {
-		const f = fmin * Math.pow(fmax / fmin, (i + 0.5) / bins);
-		const v = (fdBuf[Math.min(fdBuf.length - 1, Math.floor(f / nyq * fdBuf.length))] || 0) / 255;
+		// Log-spaced bars: take the max FFT bin covered by the bar,
+		// otherwise high-frequency bars sample a single arbitrary bin.
+		const fA = fmin * Math.pow(fmax / fmin, i / bins);
+		const fB = fmin * Math.pow(fmax / fmin, (i + 1) / bins);
+		const b0 = Math.min(fdBuf.length - 1, Math.floor(fA / binHz));
+		const b1 = Math.min(fdBuf.length, Math.max(b0 + 1, Math.ceil(fB / binHz)));
+		let raw = 0;
+		for (let b = b0; b < b1; b++) { if (fdBuf[b] > raw) { raw = fdBuf[b]; } }
+		const v = raw / 255;
 		const h = Math.pow(v, 1.35) * (H - 16);
 
 		g.fillStyle = v > 0.75 ? colorOrange : v > 0.45 ? colorAmber : colorMint;
@@ -861,12 +880,11 @@ function drawSpec() {
 /* ═══════════ right panel ═══════════ */
 
 function renderRangeBar() {
-	const whites = [0, 2, 4, 5, 7, 9, 11];
 	const stops = [];
 	for (let m = RLO; m < RHI; m++) {
 		const a = ((m - RLO) / RSPAN * 100).toFixed(2);
 		const b = ((m + 1 - RLO) / RSPAN * 100).toFixed(2);
-		stops.push((whites.includes(m % 12) ? colorStopsWhite : colorStopsBlack) + ' ' + a + '% ' + b + '%');
+		stops.push((WHITE_KEYS.includes(m % 12) ? colorStopsWhite : colorStopsBlack) + ' ' + a + '% ' + b + '%');
 	}
 	boxRangeBar.style.backgroundImage = 'linear-gradient(90deg,' + stops.join(',') + ')';
 }
@@ -979,18 +997,10 @@ function updUI() {
 	boxDBPeak.style.left = clamp((peakDb + 60) / 60 * 100, 0, 100) + '%';
 	if (++rangeTick % 30 === 0) computeRange();
 	if (S.lyrics.lyrAutoscroll) scrollLyrics(p);
-
-	// const dg = boxDiag;
-	// if (dg) {
-	// 	let t = 'sr ' + (actx ? actx.sampleRate : 0);
-	// 	t += S.micOn ? (' · input: ' + (S.voiced ? 'f=' + num(S.freq, 1) + ' Hz · ' + num(db, 0) + ' dB · note=' + midiName(S.dispMidi) : 'silence')) : ' · input off';
-	// 	if (badSamples > 0) t += ' · bad samples: ' + badSamples;
-	// 	dg.textContent = t;
-	// }
 }
 
 function changeVolume(which, val) {
-	if (val > 100) { val = 100; } else if (val < 0) { val = 0; }
+	val = clamp(Math.round(Number(val) || 0), 0, 100);
 	const rng = which === C_MUS ? rngMusVol : rngRefVol;
 	const el = which === C_MUS ? boxMusVolVal : boxRefVolVal;
 	if (which === C_MUS) { if (gMusic) gMusic.gain.value = val / 100; }
@@ -1002,16 +1012,10 @@ function changeVolume(which, val) {
 }
 
 function toggleLyrics(state = false) {
-	if (state === null || state === undefined) {
-		return;
-	} else if (state) {
-		boxLyrics.classList.add('open');
-		btnLyrics.classList.add('open');
-	} else {
-		boxLyrics.classList.remove('open');
-		btnLyrics.classList.remove('open');
-	}
-	settings.set('lyricsOpen', boxLyrics.classList.contains('open'));
+	const open = !!state;
+	boxLyrics.classList.toggle('open', open);
+	btnLyrics.classList.toggle('open', open);
+	settings.set('lyricsOpen', open);
 }
 
 function toggleInd(id, state = false) {
@@ -1046,7 +1050,7 @@ function applyTheme(theme) {
 }
 
 function changeLyrSize(val) {
-	if (val < 1) { val = 1; }
+	val = clamp(Math.round(Number(val) || 14), 6, 72);
 	textLyrics.style.fontSize = val + 'pt';
 	inpLyrSize.value = val;
 	settings.set('lyrSize', val);
@@ -1075,7 +1079,7 @@ for (const lyr of lyrs) { toggleLyr(lyr, settings.get(lyr)); }
 
 /* ═══════════ main cycle ═══════════ */
 
-boxAppVersion.innerHTML = 'v' + CURRENT_VERSION;
+boxAppVersion.textContent = 'v' + CURRENT_VERSION;
 
 function frame() {
 	try {
@@ -1084,7 +1088,6 @@ function frame() {
 		if (S.playing && d > 0 && pos() >= d) { S.offset = d; pause(); }
 		drawChart(); drawStrip(); drawSpec(); updUI();
 	} catch (err) {
-		if (boxDiag) boxDiag.textContent = 'error: ' + err.message;
 		if (window.console) console.error('[VOCNOTES]', err);
 	}
 	requestAnimationFrame(frame);
@@ -1102,7 +1105,7 @@ setLyrWidth(settings.get('lyrWidth'));
 for (const track of PLAYLIST) {
 	const btn = document.createElement("button");
 	btn.classList.add('mbtn', 'psong');
-	btn.innerHTML = track;
+	btn.textContent = track;
 	boxPlaylist.appendChild(btn);
 	btn.addEventListener('click', () => {
 		boxMenu.removeAttribute('mode');

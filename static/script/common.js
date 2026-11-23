@@ -8,6 +8,9 @@ const LIVE_CONF = 0.25;
 const DPR = window.devicePixelRatio || 1;
 const NOTES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
 
+/* semitone numbers of the white piano keys (C, D, E, F, G, A, B) */
+const WHITE_KEYS = [0, 2, 4, 5, 7, 9, 11];
+
 const VOICES = [
 	['Bass', 40, 64],
 	['Baritone', 43, 67],
